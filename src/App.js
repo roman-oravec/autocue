@@ -50,6 +50,7 @@ export default function App() {
   const [xmlContent, setXmlContent] = useState(null);
   const [xmlFilePath, setXmlFilePath] = useState("");
   const [tracks, setTracks] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [selectedTracks, setSelectedTracks] = useState([]);
   const [config, setConfig] = useState({
     beforeReference: "firstHotCue", // 'firstHotCue', 'specificHotCue', 'intro'
@@ -69,10 +70,16 @@ export default function App() {
   const [modifiedXmlContent, setModifiedXmlContent] = useState(null);
 
   // Handle file loading
-  const handleFileLoad = async (filePath, content, parsedTracks) => {
+  const handleFileLoad = async (
+    filePath,
+    content,
+    parsedTracks,
+    parsedPlaylists
+  ) => {
     setXmlFilePath(filePath);
     setXmlContent(content);
     setTracks(parsedTracks);
+    setPlaylists(parsedPlaylists || []);
     setError(null);
   };
 
@@ -148,6 +155,7 @@ export default function App() {
             tracks={tracks}
             selectedTracks={selectedTracks}
             onSelectionChange={handleTrackSelection}
+            playlists={playlists}
           />
         );
       case 3:
