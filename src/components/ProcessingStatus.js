@@ -190,19 +190,23 @@ const ProcessingStatus = ({
         </Typography>
         <ol>
           <Typography component="li" paragraph>
-            Open Rekordbox and connect to your collection
+            In Rekordbox, go to Settings - Advanced - Database.
           </Typography>
           <Typography component="li" paragraph>
-            Go to File &gt; Import &gt; XML
+            In the "rekordbox xml" section, click Browse and find the XML file
+            you just exported and select it. Then close the Settings window.
           </Typography>
           <Typography component="li" paragraph>
-            Select the exported XML file
+            In the bottom left panel, scroll to the "rekordbox xml" section and
+            find the playlist with tracks where you added the cues. Click the
+            playlist name to select it.
           </Typography>
           <Typography component="li" paragraph>
-            The tracks with new cue points will be imported as a new playlist
+            In the bottom middle section (the track list), select the tracks,
+            right-click and choose "Import to Collection."
           </Typography>
           <Typography component="li" paragraph>
-            You can then sync these changes to your DJ controller or USB drive
+            The tracks with new cues will now be available in your collection.
           </Typography>
         </ol>
       </Paper>

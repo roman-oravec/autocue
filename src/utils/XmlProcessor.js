@@ -270,27 +270,33 @@ class XmlProcessor {
     if (config.addCueAtReference) {
       // Create memory cue at before reference point if it doesn't already exist
       if (
-        !this.isTooCloseToExistingCues(track, parseFloat(beforeRefPoint.start))
+        !this.isTooCloseToExistingCues(
+          track,
+          parseFloat(beforeRefPoint["@_Start"])
+        )
       ) {
         newCues.push({
           "@_Name": "REF START",
           "@_Type": "0",
           "@_Num": "-1", // -1 for memory cue
-          "@_Start": beforeRefPoint.start,
+          "@_Start": beforeRefPoint["@_Start"],
           "@_End": "0.0",
         });
       }
 
       // Create memory cue at after reference point if it's different and doesn't already exist
       if (
-        afterRefPoint.start !== beforeRefPoint.start &&
-        !this.isTooCloseToExistingCues(track, parseFloat(afterRefPoint.start))
+        afterRefPoint["@_Start"] !== beforeRefPoint["@_Start"] &&
+        !this.isTooCloseToExistingCues(
+          track,
+          parseFloat(afterRefPoint["@_Start"])
+        )
       ) {
         newCues.push({
           "@_Name": "REF END",
           "@_Type": "0",
           "@_Num": "-1", // -1 for memory cue
-          "@_Start": afterRefPoint.start,
+          "@_Start": afterRefPoint["@_Start"],
           "@_End": "0.0",
         });
       }
