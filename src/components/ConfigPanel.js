@@ -39,6 +39,40 @@ const ConfigPanel = ({ config, onChange }) => {
     onChange({ [name]: newValue });
   };
 
+  // Map slider index to actual bar values for intervals
+  const barValues = [2, 4, 8, 16, 32, 64];
+
+  // Convert bar value to slider index
+  const getSliderIndex = (barValue) => {
+    const index = barValues.indexOf(barValue);
+    if (index >= 0) return index;
+
+    // If the value is not in our array, find the closest value
+    let bestIndex = 0;
+    let minDiff = Math.abs(barValues[0] - barValue);
+
+    for (let i = 1; i < barValues.length; i++) {
+      const diff = Math.abs(barValues[i] - barValue);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestIndex = i;
+      }
+    }
+
+    return bestIndex;
+  };
+
+  // Create marks for the sliders
+  const intervalMarks = barValues.map((value, index) => ({
+    value: index,
+    label: value.toString(),
+  }));
+
+  // Handle interval slider changes
+  const handleIntervalChange = (name) => (e, sliderIndex) => {
+    onChange({ [name]: barValues[sliderIndex] });
+  };
+
   // Handle boolean switch changes
   const handleSwitchChange = (e) => {
     const { name, checked } = e.target;
@@ -129,13 +163,14 @@ const ConfigPanel = ({ config, onChange }) => {
               </Typography>
               <Slider
                 aria-labelledby="before-interval-slider"
-                value={config.beforeInterval}
-                onChange={handleSliderChange("beforeInterval")}
-                step={1}
-                marks
-                min={1}
-                max={32}
+                value={getSliderIndex(config.beforeInterval)}
+                onChange={handleIntervalChange("beforeInterval")}
+                step={null}
+                marks={intervalMarks}
+                min={0}
+                max={barValues.length - 1}
                 valueLabelDisplay="auto"
+                valueLabelFormat={(index) => barValues[index]}
               />
             </Box>
           </Paper>
@@ -209,13 +244,14 @@ const ConfigPanel = ({ config, onChange }) => {
               </Typography>
               <Slider
                 aria-labelledby="after-interval-slider"
-                value={config.afterInterval}
-                onChange={handleSliderChange("afterInterval")}
-                step={1}
-                marks
-                min={1}
-                max={32}
+                value={getSliderIndex(config.afterInterval)}
+                onChange={handleIntervalChange("afterInterval")}
+                step={null}
+                marks={intervalMarks}
+                min={0}
+                max={barValues.length - 1}
                 valueLabelDisplay="auto"
+                valueLabelFormat={(index) => barValues[index]}
               />
             </Box>
           </Paper>
