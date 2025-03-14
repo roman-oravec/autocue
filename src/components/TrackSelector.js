@@ -47,7 +47,6 @@ const TrackRow = React.memo(({ track, isSelected, onToggle }) => {
       <TableCell>{track.name}</TableCell>
       <TableCell>{track.artist}</TableCell>
       <TableCell>{track.bpm ? track.bpm.toFixed(2) : "N/A"}</TableCell>
-      <TableCell>{track.key || "N/A"}</TableCell>
       <TableCell align="right">{track.hotCues?.length || 0}</TableCell>
       <TableCell align="right">{track.memoryCues?.length || 0}</TableCell>
     </TableRow>
@@ -95,7 +94,8 @@ const TrackSelector = ({
 
   // Filter playlists to only include those with tracks that match the search
   const filteredPlaylists = useMemo(() => {
-    return playlists
+    // First create the filtered playlists
+    const filteredUserPlaylists = playlists
       .map((playlist) => {
         const validTrackIds = playlist.trackIds.filter(
           (id) => trackMap.has(id) && filteredTrackMap.has(id)
@@ -108,7 +108,24 @@ const TrackSelector = ({
         };
       })
       .filter((playlist) => playlist.filteredTrackIds.length > 0);
-  }, [playlists, trackMap, filteredTrackMap, expandedPlaylists]);
+
+    // Then add the "All Tracks" virtual playlist at the beginning
+    const allTracksPlaylist = {
+      id: "all-tracks",
+      name: "All Tracks",
+      filteredTrackIds: filteredTracks.map((track) => track.id),
+      expanded: !!expandedPlaylists["all-tracks"],
+      isAllTracks: true,
+    };
+
+    return [allTracksPlaylist, ...filteredUserPlaylists];
+  }, [
+    playlists,
+    trackMap,
+    filteredTrackMap,
+    expandedPlaylists,
+    filteredTracks,
+  ]);
 
   // Handle track selection - optimized with useCallback
   const handleToggleTrack = useCallback(
@@ -122,24 +139,6 @@ const TrackSelector = ({
     },
     [onSelectionChange]
   );
-
-  // Handle select all visible tracks
-  const handleSelectAllClick = useCallback(() => {
-    const allVisible = filteredTracks.map((track) => track.id);
-    const allSelected = allVisible.every((id) => selectedTracks.includes(id));
-
-    if (allSelected) {
-      // Deselect all visible tracks
-      onSelectionChange(
-        selectedTracks.filter((id) => !allVisible.includes(id))
-      );
-    } else {
-      // Select all visible tracks
-      const newSelected = new Set(selectedTracks);
-      allVisible.forEach((id) => newSelected.add(id));
-      onSelectionChange(Array.from(newSelected));
-    }
-  }, [filteredTracks, selectedTracks, onSelectionChange]);
 
   // Handle selecting all tracks in a playlist
   const handleSelectPlaylistTracks = useCallback(
@@ -252,7 +251,6 @@ const TrackSelector = ({
           <TableCell sx={{ flex: "0 0 80px" }}>
             {track.bpm ? track.bpm.toFixed(2) : "N/A"}
           </TableCell>
-          <TableCell sx={{ flex: "0 0 60px" }}>{track.key || "N/A"}</TableCell>
           <TableCell align="right" sx={{ flex: "0 0 80px" }}>
             {track.hotCues?.length || 0}
           </TableCell>
@@ -278,7 +276,7 @@ const TrackSelector = ({
       }
 
       return (
-        <Box sx={{ height: 400, width: "100%" }}>
+        <Box sx={{ height: playlist.isAllTracks ? 500 : 400, width: "100%" }}>
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
@@ -305,11 +303,8 @@ const TrackSelector = ({
                 <TableCell sx={{ flex: 1 }}>
                   <strong>Artist</strong>
                 </TableCell>
-                <TableCell sx={{ flex: "0 0 80px" }}>
+                <TableCell align="left" sx={{ flex: "0 0 80px" }}>
                   <strong>BPM</strong>
-                </TableCell>
-                <TableCell sx={{ flex: "0 0 60px" }}>
-                  <strong>Key</strong>
                 </TableCell>
                 <TableCell align="right" sx={{ flex: "0 0 80px" }}>
                   <strong>Hot</strong>
@@ -366,20 +361,18 @@ const TrackSelector = ({
           }}
           sx={{ mr: 2 }}
         />
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<PlaylistAddCheckIcon />}
-          onClick={handleSelectAllClick}
-        >
-          {filteredTracks.length > 0 &&
-          filteredTracks.every((track) => selectedTracks.includes(track.id))
-            ? "Deselect All"
-            : "Select All"}
-        </Button>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      <Box
+        sx={{
+          mb: 3,
+          height: "calc(100vh - 390px)",
+          minHeight: "400px",
+          maxHeight: "600px",
+          overflow: "auto",
+          pr: 1, // Add right padding for scrollbar
+        }}
+      >
         {filteredPlaylists.length === 0 ? (
           <Typography sx={{ p: 2, textAlign: "center" }}>
             No playlists found with matching tracks
@@ -398,7 +391,7 @@ const TrackSelector = ({
                 expanded={!!expandedPlaylists[playlist.id]}
                 onChange={() => handleAccordionToggle(playlist.id)}
                 sx={{ mb: 1 }}
-                TransitionProps={{ unmountOnExit: true }} // Unmount content when closed for performance
+                unmountOnExit={true} // Unmount content when closed for performance
               >
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}

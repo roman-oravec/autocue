@@ -39,8 +39,8 @@ const darkTheme = createTheme({
 // Steps in the process
 const steps = [
   "Import XML",
-  "Configure Cues",
   "Select Tracks",
+  "Configure Cues",
   "Process & Export",
 ];
 
@@ -148,8 +148,6 @@ export default function App() {
       case 0:
         return <FileLoader onFileLoad={handleFileLoad} />;
       case 1:
-        return <ConfigPanel config={config} onChange={handleConfigChange} />;
-      case 2:
         return (
           <TrackSelector
             tracks={tracks}
@@ -158,6 +156,8 @@ export default function App() {
             playlists={playlists}
           />
         );
+      case 2:
+        return <ConfigPanel config={config} onChange={handleConfigChange} />;
       case 3:
         return (
           <ProcessingStatus
@@ -219,7 +219,7 @@ export default function App() {
                 onClick={handleNext}
                 disabled={
                   (activeStep === 0 && !xmlContent) ||
-                  (activeStep === 2 && selectedTracks.length === 0) ||
+                  (activeStep === 1 && selectedTracks.length === 0) ||
                   (activeStep === 3 && processing)
                 }
               >
