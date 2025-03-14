@@ -26,26 +26,15 @@ const ProcessingStatus = ({
   success,
   modifiedXmlContent,
 }) => {
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [exportPath, setExportPath] = useState("");
   const [exportError, setExportError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [exportPath, setExportPath] = useState("");
 
   // Calculate progress percentage
   const progress = total > 0 ? (processed / total) * 100 : 0;
 
-  // Handle export button click
-  const handleExportClick = () => {
-    setExportDialogOpen(true);
-  };
-
-  // Handle dialog close
-  const handleDialogClose = () => {
-    setExportDialogOpen(false);
-  };
-
-  // Handle file export
-  const handleExport = async () => {
+  // Handle export button click - directly open the save dialog
+  const handleExportClick = async () => {
     try {
       setExportError(null);
       setExportSuccess(false);
@@ -118,6 +107,11 @@ const ProcessingStatus = ({
             sx={{ mb: 2 }}
           >
             Successfully processed {processed} tracks!
+            {exportSuccess && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                File saved to: {exportPath}
+              </Typography>
+            )}
           </Alert>
         ) : error ? (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -126,6 +120,12 @@ const ProcessingStatus = ({
         ) : (
           <Alert severity="info" sx={{ mb: 2 }}>
             Ready to process {total} tracks.
+          </Alert>
+        )}
+
+        {exportError && (
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+            {exportError}
           </Alert>
         )}
 
@@ -170,33 +170,6 @@ const ProcessingStatus = ({
           </Typography>
         </ol>
       </Paper>
-
-      {/* Export Dialog */}
-      <Dialog open={exportDialogOpen} onClose={handleDialogClose}>
-        <DialogTitle>Export Modified XML</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Your modified XML file will contain all your tracks with the new cue
-            points added according to your configuration.
-          </DialogContentText>
-          {exportError && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {exportError}
-            </Alert>
-          )}
-          {exportSuccess && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              Successfully exported to: {exportPath}
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleExport} color="primary" autoFocus>
-            Export
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
