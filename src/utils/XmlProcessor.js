@@ -187,7 +187,7 @@ class XmlProcessor {
         }
       });
 
-      // Create a new playlist with the processed tracks
+      // Create a new playlist with the processed tracks or update existing one
       this.createPlaylistWithProcessedTracks(parsedData, selectedTrackIds);
 
       // Convert back to XML string
@@ -560,11 +560,13 @@ class XmlProcessor {
   }
 
   /**
-   * Create a new playlist with the processed tracks
+   * Create a new playlist with the processed tracks or update existing one
    * @param {Object} parsedData Parsed XML object
    * @param {Array<string>} selectedTrackIds IDs of processed tracks
    */
   createPlaylistWithProcessedTracks(parsedData, selectedTrackIds) {
+    const PLAYLIST_NAME = "Autocue Processed Tracks";
+
     // Ensure PLAYLISTS node exists
     if (!parsedData.DJ_PLAYLISTS.PLAYLISTS) {
       parsedData.DJ_PLAYLISTS.PLAYLISTS = {
@@ -579,16 +581,29 @@ class XmlProcessor {
       ];
     }
 
-    // Create a new playlist node
-    const newPlaylist = {
-      "@_Name": "Autocue Processed Tracks",
+    // Check if our playlist already exists
+    const existingPlaylistIndex =
+      parsedData.DJ_PLAYLISTS.PLAYLISTS.NODE.findIndex(
+        (node) => node["@_Name"] === PLAYLIST_NAME
+      );
+
+    // Create the playlist data with the count of tracks in the Entries attribute
+    const playlistData = {
+      "@_Name": PLAYLIST_NAME,
       "@_Type": "1",
       "@_KeyType": "0",
+      "@_Entries": selectedTrackIds.length.toString(), // Add Entries attribute with track count
       TRACK: selectedTrackIds.map((id) => ({ "@_Key": id })),
     };
 
-    // Add the playlist to the playlists array
-    parsedData.DJ_PLAYLISTS.PLAYLISTS.NODE.push(newPlaylist);
+    if (existingPlaylistIndex >= 0) {
+      // Update the existing playlist
+      parsedData.DJ_PLAYLISTS.PLAYLISTS.NODE[existingPlaylistIndex] =
+        playlistData;
+    } else {
+      // Add a new playlist
+      parsedData.DJ_PLAYLISTS.PLAYLISTS.NODE.push(playlistData);
+    }
   }
 }
 
