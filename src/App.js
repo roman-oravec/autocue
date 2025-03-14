@@ -75,6 +75,7 @@ export default function App() {
     beforeInterval: 8, // bars between cues (before)
     afterInterval: 16, // bars between cues (after)
     cueType: "memory", // 'memory' or 'hot'
+    addCueAtReference: false, // whether to add a memory cue at the reference point
   });
   const [processing, setProcessing] = useState(false);
   const [processedTracks, setProcessedTracks] = useState(0);

@@ -266,6 +266,36 @@ class XmlProcessor {
     // Create arrays to store new cues
     const newCues = [];
 
+    // Add memory cues at reference points if configured
+    if (config.addCueAtReference) {
+      // Create memory cue at before reference point if it doesn't already exist
+      if (
+        !this.isTooCloseToExistingCues(track, parseFloat(beforeRefPoint.start))
+      ) {
+        newCues.push({
+          "@_Name": "REF START",
+          "@_Type": "0",
+          "@_Num": "-1", // -1 for memory cue
+          "@_Start": beforeRefPoint.start,
+          "@_End": "0.0",
+        });
+      }
+
+      // Create memory cue at after reference point if it's different and doesn't already exist
+      if (
+        afterRefPoint.start !== beforeRefPoint.start &&
+        !this.isTooCloseToExistingCues(track, parseFloat(afterRefPoint.start))
+      ) {
+        newCues.push({
+          "@_Name": "REF END",
+          "@_Type": "0",
+          "@_Num": "-1", // -1 for memory cue
+          "@_Start": afterRefPoint.start,
+          "@_End": "0.0",
+        });
+      }
+    }
+
     // Generate cues before reference point
     if (config.beforeCount > 0) {
       const cueBefore = this.generateCuesBeforeRef(

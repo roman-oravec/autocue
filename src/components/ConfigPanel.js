@@ -15,6 +15,7 @@ import {
   Divider,
   Slider,
   Alert,
+  Switch,
 } from "@mui/material";
 
 const ConfigPanel = ({ config, onChange }) => {
@@ -36,6 +37,12 @@ const ConfigPanel = ({ config, onChange }) => {
   // Handle slider changes
   const handleSliderChange = (name) => (e, newValue) => {
     onChange({ [name]: newValue });
+  };
+
+  // Handle boolean switch changes
+  const handleSwitchChange = (e) => {
+    const { name, checked } = e.target;
+    onChange({ [name]: checked });
   };
 
   return (
@@ -241,6 +248,24 @@ const ConfigPanel = ({ config, onChange }) => {
                 />
               </RadioGroup>
             </FormControl>
+
+            <Box sx={{ mt: 3 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={config.addCueAtReference}
+                    onChange={handleSwitchChange}
+                    name="addCueAtReference"
+                    color="primary"
+                  />
+                }
+                label="Add memory cue at reference point"
+              />
+              <Typography variant="body2" color="text.secondary">
+                This will place a memory cue exactly at the reference point
+                position
+              </Typography>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
