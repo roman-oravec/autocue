@@ -10,6 +10,9 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Button from "@mui/material/Button";
 
+// Import Electron IPC renderer
+const { ipcRenderer } = window.require("electron");
+
 // Import components
 import FileLoader from "./components/FileLoader";
 import ConfigPanel from "./components/ConfigPanel";
@@ -68,6 +71,17 @@ export default function App() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [modifiedXmlContent, setModifiedXmlContent] = useState(null);
+
+  // Reset function to go back to the first step
+  const resetToFirstStep = () => {
+    setActiveStep(0);
+    setProcessing(false);
+    setProcessedTracks(0);
+    setError(null);
+    setSuccess(false);
+    setModifiedXmlContent(null);
+    setSelectedTracks([]);
+  };
 
   // Handle file loading
   const handleFileLoad = async (
@@ -167,6 +181,7 @@ export default function App() {
             error={error}
             success={success}
             modifiedXmlContent={modifiedXmlContent}
+            onDone={resetToFirstStep}
           />
         );
       default:
@@ -216,14 +231,22 @@ export default function App() {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleNext}
+                onClick={
+                  activeStep === steps.length - 1 && success
+                    ? resetToFirstStep
+                    : handleNext
+                }
                 disabled={
                   (activeStep === 0 && !xmlContent) ||
                   (activeStep === 1 && selectedTracks.length === 0) ||
                   (activeStep === 3 && processing)
                 }
               >
-                {activeStep === steps.length - 1 ? "Process & Export" : "Next"}
+                {activeStep === steps.length - 1
+                  ? success
+                    ? "Done"
+                    : "Process & Export"
+                  : "Next"}
               </Button>
             </Box>
           </Paper>

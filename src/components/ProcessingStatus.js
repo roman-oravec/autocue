@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DoneIcon from "@mui/icons-material/Done";
+import HomeIcon from "@mui/icons-material/Home";
 
 // This is an Electron app, so we can use the ipcRenderer
 const { ipcRenderer } = window.require("electron");
@@ -25,13 +27,30 @@ const ProcessingStatus = ({
   error,
   success,
   modifiedXmlContent,
+  onDone,
 }) => {
   const [exportError, setExportError] = useState(null);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [exportPath, setExportPath] = useState("");
+  const autoExportedRef = useRef(false);
 
   // Calculate progress percentage
   const progress = total > 0 ? (processed / total) * 100 : 0;
+
+  // Auto export when processing is complete
+  useEffect(() => {
+    if (success && modifiedXmlContent && !autoExportedRef.current) {
+      autoExportedRef.current = true;
+      handleExportClick();
+    }
+  }, [success]);
+
+  // Reset the auto-export flag when processing starts again
+  useEffect(() => {
+    if (processing) {
+      autoExportedRef.current = false;
+    }
+  }, [processing]);
 
   // Handle export button click - directly open the save dialog
   const handleExportClick = async () => {
@@ -75,8 +94,10 @@ const ProcessingStatus = ({
         Process and Export
       </Typography>
       <Typography paragraph>
-        Adding cue points to your selected tracks. Once completed, you can
-        export the modified XML file.
+        When you click the "Process & Export" button, cue points will be added
+        to your selected tracks, and then a save dialog will open automatically.
+        Once you've saved the file, you can use the "Done" button at the bottom
+        right to return to the start.
       </Typography>
 
       <Paper sx={{ p: 3, mb: 3 }}>
