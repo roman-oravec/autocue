@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -6,30 +6,78 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Chip,
+  Divider,
+  Stack,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import HistoryIcon from "@mui/icons-material/History";
 import { XMLParser } from "fast-xml-parser";
 
+// Safe require for Electron modules
+const safeRequire = (module) => {
+  try {
+    return window.require(module);
+  } catch (error) {
+    console.error(`Failed to require ${module}:`, error);
+    return null;
+  }
+};
+
 // This is an Electron app, so we can use the ipcRenderer
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = safeRequire("electron") || { ipcRenderer: null };
+
+// Import Store for persistency - with error handling
+let store;
+try {
+  const Store = safeRequire("electron-store");
+  store = Store ? new Store() : null;
+} catch (error) {
+  console.error("Failed to initialize electron-store:", error);
+  store = null;
+}
+
+// Fallback if store initialization failed
+if (!store) {
+  store = {
+    get: () => null,
+    set: () => {},
+    delete: () => {},
+  };
+}
 
 const FileLoader = ({ onFileLoad }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [lastFilePath, setLastFilePath] = useState(null);
 
-  const handleFileSelect = async () => {
+  // Check for last opened file on component mount
+  useEffect(() => {
     try {
+      const savedFilePath = store.get("lastXmlFilePath");
+      if (savedFilePath) {
+        // Extract file name from path
+        const pathParts = savedFilePath.split(/[/\\]/);
+        const lastFileName = pathParts[pathParts.length - 1];
+
+        setLastFilePath(savedFilePath);
+      }
+    } catch (error) {
+      console.error("Error retrieving last file path:", error);
+      // Don't update the state if there's an error
+    }
+  }, []);
+
+  const loadFile = async (filePath) => {
+    try {
+      // Check if ipcRenderer is available
+      if (!ipcRenderer) {
+        throw new Error("Electron IPC is not available");
+      }
+
       setLoading(true);
       setError(null);
-
-      // Use Electron dialog to select file
-      const filePath = await ipcRenderer.invoke("select-file");
-
-      if (!filePath) {
-        setLoading(false);
-        return; // User cancelled
-      }
 
       // Extract file name from path
       const pathParts = filePath.split(/[/\\]/);
@@ -78,6 +126,15 @@ const FileLoader = ({ onFileLoad }) => {
       // Extract playlists from the XML
       const playlists = extractPlaylists(parsedData);
 
+      // Save file path for future use
+      try {
+        store.set("lastXmlFilePath", filePath);
+        setLastFilePath(filePath);
+      } catch (error) {
+        console.error("Error saving last file path:", error);
+        // Continue with file loading even if we couldn't save the path
+      }
+
       // Pass data to parent component
       onFileLoad(filePath, content, tracks, playlists);
     } catch (err) {
@@ -85,6 +142,60 @@ const FileLoader = ({ onFileLoad }) => {
       setError(`Error loading XML file: ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileSelect = async () => {
+    try {
+      // Check if ipcRenderer is available
+      if (!ipcRenderer) {
+        throw new Error("Electron IPC is not available");
+      }
+
+      // Use Electron dialog to select file
+      const filePath = await ipcRenderer.invoke("select-file");
+
+      if (!filePath) {
+        return; // User cancelled
+      }
+
+      await loadFile(filePath);
+    } catch (err) {
+      console.error("Error selecting XML file:", err);
+      setError(`Error selecting XML file: ${err.message}`);
+    }
+  };
+
+  const handleLastFileLoad = async () => {
+    if (!ipcRenderer) {
+      setError("Electron IPC is not available");
+      return;
+    }
+
+    if (lastFilePath) {
+      try {
+        // Check if file exists
+        const fileExists = await ipcRenderer.invoke(
+          "check-file-exists",
+          lastFilePath
+        );
+        if (!fileExists) {
+          setError(`Last file not found: ${lastFilePath}`);
+          // Remove the invalid path from store
+          try {
+            store.delete("lastXmlFilePath");
+          } catch (error) {
+            console.error("Error deleting last file path from store:", error);
+          }
+          setLastFilePath(null);
+          return;
+        }
+
+        await loadFile(lastFilePath);
+      } catch (err) {
+        console.error("Error loading last file:", err);
+        setError(`Error loading last file: ${err.message}`);
+      }
     }
   };
 
@@ -203,6 +314,34 @@ const FileLoader = ({ onFileLoad }) => {
         Rekordbox by going to File &gt; Export Collection in XML format.
       </Typography>
 
+      {lastFilePath && !loading && !fileName && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            mt: 2,
+            mb: 2,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <HistoryIcon color="primary" />
+            <Typography variant="body1">
+              Last opened file: {lastFilePath.split(/[/\\]/).pop()}
+            </Typography>
+          </Stack>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleLastFileLoad}
+          >
+            Load Last Used File
+          </Button>
+        </Paper>
+      )}
+
       <Paper
         variant="outlined"
         sx={{
@@ -235,7 +374,9 @@ const FileLoader = ({ onFileLoad }) => {
               onClick={handleFileSelect}
               sx={{ mt: 2 }}
             >
-              Select Rekordbox XML
+              {lastFilePath
+                ? "Select Different XML File"
+                : "Select Rekordbox XML"}
             </Button>
           </>
         )}

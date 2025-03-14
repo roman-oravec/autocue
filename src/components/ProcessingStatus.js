@@ -17,8 +17,18 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoneIcon from "@mui/icons-material/Done";
 import HomeIcon from "@mui/icons-material/Home";
 
+// Safe require for Electron modules
+const safeRequire = (module) => {
+  try {
+    return window.require(module);
+  } catch (error) {
+    console.error(`Failed to require ${module}:`, error);
+    return null;
+  }
+};
+
 // This is an Electron app, so we can use the ipcRenderer
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = safeRequire("electron") || { ipcRenderer: null };
 
 const ProcessingStatus = ({
   processing,
@@ -55,6 +65,11 @@ const ProcessingStatus = ({
   // Handle export button click - directly open the save dialog
   const handleExportClick = async () => {
     try {
+      // Check if ipcRenderer is available
+      if (!ipcRenderer) {
+        throw new Error("Electron IPC is not available");
+      }
+
       setExportError(null);
       setExportSuccess(false);
 

@@ -95,3 +95,13 @@ ipcMain.handle("write-file", async (event, filePath, content) => {
     return false;
   }
 });
+
+// Add handler to check if a file exists
+ipcMain.handle("check-file-exists", async (event, filePath) => {
+  try {
+    return fs.existsSync(filePath);
+  } catch (error) {
+    console.error("Error checking if file exists:", error);
+    return false;
+  }
+});

@@ -10,8 +10,18 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Button from "@mui/material/Button";
 
+// Safe require for Electron modules
+const safeRequire = (module) => {
+  try {
+    return window.require(module);
+  } catch (error) {
+    console.error(`Failed to require ${module}:`, error);
+    return null;
+  }
+};
+
 // Import Electron IPC renderer
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = safeRequire("electron") || { ipcRenderer: null };
 
 // Import components
 import FileLoader from "./components/FileLoader";
